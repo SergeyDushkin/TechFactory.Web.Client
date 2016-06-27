@@ -6,21 +6,28 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class OrdersService {
-  private _ordersCollectionUrl: string = `${AppSettings.API_ENDPOINT}/Orders`;
-  private _orderLinesCollectionUrl: string = `${AppSettings.API_ENDPOINT}/OrderLines`;
+  private ordersCollectionUrl: string = `${AppSettings.API_ENDPOINT}/Orders`;
+  private orderLinesCollectionUrl: string = `${AppSettings.API_ENDPOINT}/OrderLines`;
   private headers: Headers = new Headers();
-  private _draft:any;
+  private draft:any;
+  private completedOrders:any[];
+  private openOrders:any[];
 
   constructor(public http: Http) {
     this.headers.append('Content-Type', 'application/json');
   }
 
   getDraft() {
+  	
+  	if (this.draft) {
+  		return Promise.resolve(this.draft);
+  	}
+
     return new Promise(resolve => {
       this.queryDraft().then(
         order => {
           if (order) {
-            this._draft = order;
+            this.draft = order;
             resolve(order);
           }
           else {
@@ -30,7 +37,7 @@ export class OrdersService {
               Number: "SO001",
               Type: "SO"
             }).then(order => { 
-              this._draft = order;
+              this.draft = order;
               resolve(order);
             });
           }
@@ -44,15 +51,15 @@ export class OrdersService {
       this.sendOrderLine(orderLine).then(
         line => {
           if (orderLine.Id) {
-            for (let lineIdx: number = 0; lineIdx < this._draft.Lines.length; lineIdx++) {
-              if (this._draft.Lines[lineIdx].Id == line.Id) {
-                this._draft.Lines[lineIdx] = line;
+            for (let lineIdx in this.draft.Lines.length) {
+              if (this.draft.Lines[lineIdx].Id == line.Id) {
+                this.draft.Lines[lineIdx] = line;
                 break;
               }
             }
           }
           else {
-           this._draft.Lines.push(line);
+           this.draft.Lines.push(line);
           }
           resolve(line);
         }
@@ -62,73 +69,107 @@ export class OrdersService {
 
   getOrderLine(item:any) {
 
-    for (let line of this._draft.Lines) {
-      if (line.Item.Id === item.Id) {
-        return Promise.resolve(line);
-      }
-    }
+  	return new Promise(resolve => {
+  		this.getDraft().then(
 
-    return new Promise(resolve => {
-      this.sendOrderLine({
-        Qty: 0,
-        ItemId: item.Id,
-        OrderId: this._draft.Id
-      }).then(
-      line => {
-        this._draft.Lines.push(line);
-        resolve(line);
-      }
-      )
-    })
+	  		draft => {
+	  			for (let line of this.draft.Lines) {
+			      if (line.Item.Id === item.Id) {
+			        resolve(line);
+			      }
+			    }
+				
+				resolve({
+					Qty: 0,
+					ItemId: item.Id,
+					OrderId: this.draft.Id
+				});
+	  		}
+		);
+  	});
+  }
+
+  getCompletedOrders() {
+  	
+  	if (this.completedOrders) {
+  		return Promise.resolve(this.completedOrders);
+  	}
+
+  	return new Promise(resolve => {
+      this.http.get(`${this.ordersCollectionUrl}/?$filter=StatusCode eq 'CLOSED' or StatusCode eq 'CANCELED'&$expand=Lines($expand=Item($expand=Links))`)
+      .map(res => res.json())
+      .subscribe(data => {
+      	this.completedOrders = data.value;
+        resolve(data.value);
+      });
+    });
+
+  }
+
+  getOpenOrders() {
+  	
+  	if (this.openOrders) {
+  		return Promise.resolve(this.openOrders);
+  	}
+
+  	return new Promise(resolve => {
+      this.http.get(`${this.ordersCollectionUrl}/?$filter=StatusCode ne 'CLOSED' and StatusCode ne 'CANCELED'&$expand=Lines($expand=Item($expand=Links))`)
+      .map(res => res.json())
+      .subscribe(data => {
+      	this.openOrders = data.value;
+        resolve(data.value);
+      });
+    });
+
   }
 
   private save(order:any) {
     if (order.Id) {
       return new Promise(resolve => {
-        this.http.put(this._ordersCollectionUrl + '(' + order.Id + ')', JSON.stringify(order), { headers: this.headers })
+        this.http.put(this.ordersCollectionUrl + '(' + order.Id + ')', JSON.stringify(order), { headers: this.headers })
         .subscribe(() => {
           resolve(null);
         })
       });
-    }
-    else {
-      return new Promise(resolve => {
-        this.http.post(this._ordersCollectionUrl, JSON.stringify(order), { headers: this.headers })
-        .map(res => res.json())
-        .subscribe(data => {
-          resolve(data.value);
-        });
-      });
-    }
+    }       
+
+    return new Promise(resolve => {
+		this.http.post(this.ordersCollectionUrl, JSON.stringify(order), { headers: this.headers })
+		.map(res => res.json())
+		.subscribe(data => {
+		  resolve(data.value);
+		});
+	});
+
   }
 
   private sendOrderLine(orderLine: any) {
 
     if (orderLine.Id) {
       return new Promise(resolve => {
-        this.http.put(this._orderLinesCollectionUrl + '(' + orderLine.Id + ')', JSON.stringify(orderLine), { headers: this.headers })
+        this.http.put(this.orderLinesCollectionUrl + '(' + orderLine.Id + ')', JSON.stringify(orderLine), { headers: this.headers })
         .subscribe(() => {
           resolve(orderLine);
         })
       });
     }
-    else {
-      return new Promise(resolve => {
-        this.http.post(this._orderLinesCollectionUrl, JSON.stringify(orderLine), { headers: this.headers })
-        .map(res => res.json())
-        .subscribe(data => {
-          resolve(data.value);
-        });
-      });
-    }
+
+	return new Promise(resolve => {
+		this.http.post(this.orderLinesCollectionUrl, JSON.stringify(orderLine), { headers: this.headers })
+		.map(res => res.json())
+		.subscribe(data => {
+		  resolve(data.value);
+		});
+	});
+    
   }
 
   private queryDraft() {
-    if (this._draft) {
-      return Promise.resolve(this._draft);
+    if (this.draft) {
+      return Promise.resolve(this.draft);
     }
     return new Promise(resolve => {
-      this.http.get(`${this._ordersCollectionUrl}/?$filter=StatusCode eq 'DRAFT'&$top=1&$expand=Lines($expand=Item)`)
+      this.http.get(`${this.ordersCollectionUrl}/?$filter=StatusCode eq 'DRAFT'&$top=1&$expand=Lines($expand=Item($expand=Links))`) //TODO: $expand=Links doesn't works((
       .map(res => res.json())
       .subscribe(data => {
         resolve(data.value[0]);

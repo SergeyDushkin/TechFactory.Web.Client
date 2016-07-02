@@ -23,12 +23,12 @@
                     <img src="{{itemLine.item.Links.length!=0?itemLine.item.Links[0].Uri:defaultImageUri}}" />
                 </ion-thumbnail>
                 <h2>{{itemLine.item.Name}}</h2>
-                <p>{{itemLine.item.note}}</p>
+                <p>$ {{itemLine.item.Price.Price}}</p>
             </ion-item>
             <ion-item-options side="left">
-                <button style="width:70px" (click)="incQty(itemLine)"><ion-icon name="add-circle"></ion-icon></button>
+                <button style="width:70px" (click)="decQty(itemLine)" secondary><ion-icon name="remove-circle"></ion-icon></button>
                 <button style="width:70px" light>{{itemLine.orderLine.Qty}}</button>
-                <button style="width:70px" (click)="decQty(itemLine)"secondary><ion-icon name="remove-circle"></ion-icon></button>
+                <button style="width:70px" (click)="incQty(itemLine)"><ion-icon name="add-circle"></ion-icon></button>
             </ion-item-options>
         </ion-item-sliding>
     </ion-list>

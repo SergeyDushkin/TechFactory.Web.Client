@@ -2,8 +2,10 @@ import {Component, ViewChild} from '@angular/core';
 import {Platform, ionicBootstrap, MenuController, Nav} from 'ionic-angular';
 import {StatusBar} from 'ionic-native';
 import {HomePage} from './pages/home/home';
+import {SinginPage} from './pages/Singin/Singin';
 import {CategoryPage} from './pages/category/category';
 import {OrdersPage} from './pages/orders/orders';
+import {LocationsPage} from './pages/locations/locations';
 import {OrdersService} from './providers/orders-service/orders-service';
 
 @Component({
@@ -16,13 +18,13 @@ export class MyApp {
     rootPage: any = HomePage;
 
     public pages: any = [
-        { title: 'Login', component: HomePage },
+        //{ title: 'Login', component: HomePage },
         { title: 'Menu', component: HomePage },
         { title: 'Orders', component: OrdersPage },
         { title: 'Payments', component: HomePage },
-        { title: 'Locations', component: HomePage },
+        { title: 'Locations', component: LocationsPage },
         { title: 'Help', component: HomePage },
-        { title: 'Sing in', component: HomePage }
+        { title: 'Sing in', component: SinginPage }
     ];
 
     constructor(platform: Platform, private _menu: MenuController) {

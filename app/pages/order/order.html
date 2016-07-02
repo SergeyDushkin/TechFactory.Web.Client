@@ -16,7 +16,7 @@
         <ion-item>
             Date
             <ion-note item-right>
-                {{order.Date}}
+                {{order.Date}} 
             </ion-note>
         </ion-item>
         <ion-item>
@@ -34,14 +34,15 @@
                 <p>{{line.Qty}}x ${{line.Price}}</p>
             </ion-item>
            <ion-item-options  side="left">
-                <button style="width:70px"><ion-icon name="add-circle"></ion-icon></button>
-               <button style="width:70px" secondary><ion-icon name="remove-circle"></ion-icon></button>
+               <button style="width:70px"  secondary><ion-icon name="remove-circle"></ion-icon></button>
+               <button style="width:70px" light>0</button>
+               <button style="width:70px" ><ion-icon name="add-circle"></ion-icon></button>
             </ion-item-options>
         </ion-item-sliding>
         <ion-item>
             Total
             <ion-note item-right>
-                {{order.Amount}}
+                $ {{order.Amount}}
             </ion-note>
         </ion-item>
        </ion-list>
@@ -49,3 +50,11 @@
         <img src="https://chart.googleapis.com/chart?cht=qr&chs=255x255&chl=3e4211d5-1f70-4bd2-a522-46df924c4467" width="300" height="300" style="display: block; margin-left: auto; margin-right: auto;">
     </div>
 </ion-content>
+
+<ion-footer>
+    <ion-toolbar>
+     
+                <button block>To order</button>
+ 
+    </ion-toolbar>
+</ion-footer>
